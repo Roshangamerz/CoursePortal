@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRR College of Technology - Academic Assessment Portal</title>
+    <!-- Tailwind CSS with Typography & Forms plugins -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js 3.x with Collapse plugin -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        college: {
+                            50: '#f0f5ff',
+                            100: '#e0ecff',
+                            200: '#c7dcff',
+                            500: '#2b6cb0',
+                            600: '#1e4e8c',
+                            700: '#173a69',
+                            800: '#122b4d',
+                            900: '#0c1b30',
+                        },
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)',
+                        'card-hover': '0 12px 30px -4px rgba(30, 78, 140, 0.12), 0 6px 12px -4px rgba(0, 0, 0, 0.04)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .custom-dropzone-pulse {
+            animation: pulse-border 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-border {
+            0%, 100% { border-color: #1e4e8c; }
+            50% { border-color: #93c5fd; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 h-full flex flex-col antialiased selection:bg-college-600 selection:text-white" x-data="academicPortalApp()" x-cloak>
+
+    <!-- Global Toast Alert Container -->
+    <div class="fixed top-5 right-5 z-50 flex flex-col space-y-3 pointer-events-none">
+        <template x-for="toast in toasts" :key="toast.id">
+            <div 
+                x-show="toast.visible" 
+                x-transition:enter="transform ease-out duration-300 transition"
+                x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+                x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="pointer-events-auto max-w-sm w-full bg-white shadow-xl rounded-xl border p-4 flex items-start space-x-3"
+                :class="{
+                    'border-emerald-200 text-emerald-900': toast.type === 'success',
+                    'border-rose-200 text-rose-900': toast.type === 'error',
+                    'border-amber-200 text-amber-900': toast.type === 'warning',
+                    'border-college-200 text-college-900': toast.type === 'info'
+                }"
+            >
+                <div class="flex-shrink-0 mt-0.5">
+                    <i class="fa-solid text-lg" :class="{
+                        'fa-circle-check text-emerald-500': toast.type === 'success',
+                        'fa-circle-exclamation text-rose-500': toast.type === 'error',
+                        'fa-triangle-exclamation text-amber-500': toast.type === 'warning',
+                        'fa-circle-info text-college-600': toast.type === 'info'
+                    }"></i>
+                </div>
+                <div class="flex-1 text-sm font-medium">
+                    <p class="font-semibold text-xs" x-text="toast.title"></p>
+                    <p class="text-[11px] text-slate-500 mt-0.5" x-text="toast.message"></p>
+                </div>
+                <button @click="dismissToast(toast.id)" class="text-slate-400 hover:text-slate-600 text-xs">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </template>
+    </div>
+
+    <!-- College Header & Branding Bar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <!-- Top Institutional Strip -->
+        <div class="bg-gradient-to-r from-college-900 via-college-800 to-slate-900 text-white py-1.5 px-4 sm:px-8 text-[11px] flex justify-between items-center border-b border-white/10">
+            <div class="flex items-center space-x-2">
+                <span class="bg-white/20 px-2 py-0.5 rounded font-mono font-semibold tracking-wider">AICTE Approved</span>
+                <span class="text-slate-300">Affiliated to JNTUH, Hyderabad</span>
+                <span class="hidden md:inline text-slate-400">• Meerpet, Hyderabad - 500097</span>
+            </div>
+            <div class="flex items-center space-x-4 font-mono">
+                <span class="text-emerald-400 flex items-center"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping mr-1.5"></span>Academic Year 2026-27</span>
+                <span class="text-slate-400 hidden sm:inline">Mid-I Exam Schedule Active</span>
+            </div>
+        </div>
+
+        <!-- Main Navigation Bar -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- College Logo & Title -->
+                <div class="flex items-center space-x-4 cursor-pointer" @click="resetToDashboard()">
+                    <div class="w-11 h-11 rounded-xl bg-college-700 text-white flex items-center justify-center shadow-md shadow-college-900/20 font-black text-xl tracking-tighter border-2 border-college-500">
+                        TRR
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-extrabold text-base sm:text-lg tracking-tight text-slate-900">TRR COLLEGE OF TECHNOLOGY</span>
+                        </div>
+                        <span class="block text-[11px] font-bold tracking-wider text-college-600 uppercase">
+                            Digital Coursework & Assignment Submission Portal
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Right Action Bar: Student / Faculty Persona Toggle -->
+                <div class="flex items-center space-x-3 sm:space-x-4">
+                    <!-- Interactive Persona Pill -->
+                    <div class="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200 shadow-inner">
+                        <button 
+                            @click="switchRole('student')" 
+                            :class="currentRole === 'student' ? 'bg-white text-college-800 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-800 font-medium'"
+                            class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs transition-all duration-150"
+                        >
+                            <i class="fa-solid fa-id-card-clip text-xs" :class="currentRole === 'student' ? 'text-college-600' : 'text-slate-400'"></i>
+                            <span>Student Mode</span>
+                        </button>
+                        <button 
+                            @click="switchRole('instructor')" 
+                            :class="currentRole === 'instructor' ? 'bg-white text-college-800 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-800 font-medium'"
+                            class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs transition-all duration-150"
+                        >
+                            <i class="fa-solid fa-chalkboard-user text-xs" :class="currentRole === 'instructor' ? 'text-college-600' : 'text-slate-400'"></i>
+                            <span>Faculty Mode</span>
+                        </button>
+                    </div>
+
+                    <!-- User Info Card (Dynamic according to Persona) -->
+                    <div class="flex items-center space-x-3 pl-2 border-l border-slate-200">
+                        <div class="relative">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-college-700 to-indigo-600 text-white font-black flex items-center justify-center text-sm shadow-sm ring-2 ring-college-500/20">
+                                <span x-text="currentRole === 'student' ? 'DS' : 'FA'"></span>
+                            </div>
+                            <span class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+                        </div>
+                        <div class="hidden sm:block text-left">
+                            <div class="flex items-center space-x-1.5">
+                                <p class="text-xs font-bold text-slate-900" x-text="currentRole === 'student' ? 'Student Nine' : 'Dr. Faculty Advisor'"></p>
+                                <span x-show="currentRole === 'student'" class="bg-college-100 text-college-800 text-[10px] font-mono px-1.5 py-0.2 rounded font-bold">25CSE1009</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 font-medium" x-text="currentRole === 'student' ? 'II B.Tech I Sem • CSE Dept.' : 'HOD & Assoc. Professor • CSE'"></p>
+                        </div>
+                    </div>
+
+                    <!-- Reset Demo Data -->
+                    <button @click="resetData()" title="Reset Sample Data" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition text-xs">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Application Content Area -->
+    <main class="flex-1 overflow-y-auto">
+        
+        <!-- ========================================================================= -->
+        <!--                         STUDENT PORTAL (Student Nine)                       -->
+        <!-- ========================================================================= -->
+        <div x-show="currentRole === 'student'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            
+            <!-- STUDENT DASHBOARD -->
+            <div x-show="studentView === 'dashboard'" class="space-y-6">
+                
+                <!-- Personalized Student Banner with Official Roll Number & Details -->
+                <div class="bg-gradient-to-r from-college-900 via-college-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+                    <div class="absolute -right-8 -bottom-8 opacity-10 pointer-events-none">
+                        <i class="fa-solid fa-university text-[220px]"></i>
+                    </div>
+
+                    <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div>
+                            <div class="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md px-3.5 py-1 rounded-full text-xs font-semibold text-blue-200 mb-3 border border-white/10">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span>Verified JNTUH Enrolled Student</span>
+                            </div>
+                            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                                Welcome back, <span class="text-blue-300">Student Nine</span>
+                            </h1>
+                            <div class="flex flex-wrap items-center gap-3 mt-3 text-xs text-blue-100 font-mono">
+                                <span class="bg-white/15 px-3 py-1 rounded-lg border border-white/10 flex items-center">
+                                    <i class="fa-solid fa-id-badge mr-2 text-blue-300"></i>
+                                    Roll No: <strong class="text-white ml-1 font-bold text-sm">25CSE1009</strong>
+                                </span>
+                                <span class="bg-white/15 px-3 py-1 rounded-lg border border-white/10 flex items-center">
+                                    <i class="fa-solid fa-graduation-cap mr-2 text-blue-300"></i>
+                                    Branch: <strong class="text-white ml-1">CSE (Computer Science & Engg)</strong>
+                                </span>
+                                <span class="bg-white/15 px-3 py-1 rounded-lg border border-white/10 flex items-center">
+                                    <i class="fa-solid fa-calendar mr-2 text-blue-300"></i>
+                                    Academic Year: <strong class="text-white ml-1">2026-27</strong>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Quick Summary Badges -->
+                        <div class="grid grid-cols-3 gap-3 bg-white/10 p-3.5 rounded-2xl backdrop-blur-sm border border-white/10 text-center shrink-0">
+                            <div class="px-3">
+                                <span class="text-[11px] text-blue-200 block font-medium">To Submit</span>
+                                <span class="text-2xl font-black text-amber-300" x-text="getStudentDueCount()"></span>
+                            </div>
+                            <div class="px-3 border-x border-white/10">
+                                <span class="text-[11px] text-blue-200 block font-medium">Submitted</span>
+                                <span class="text-2xl font-black text-emerald-300" x-text="getStudentSubmittedCount()"></span>
+                            </div>
+                            <div class="px-3">
+                                <span class="text-[11px] text-blue-200 block font-medium">Graded</span>
+                                <span class="text-2xl font-black text-sky-300" x-text="getStudentGradedCount()"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= YEAR & SEMESTER SELECTOR TABS ================= -->
+                <!-- Direct real-life structure from TRR Mid-I Schedule (II B.Tech, III B.Tech, IV B.Tech) -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-layer-group text-college-600"></i>
+                            <span class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Select Year & Semester Curriculum:</span>
+                        </div>
+                        
+                        <!-- Branch Selection Toggle (CSE / IT) -->
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="text-slate-400 font-semibold">Department:</span>
+                            <div class="bg-slate-100 p-1 rounded-lg flex space-x-1 border border-slate-200">
+                                <button 
+                                    @click="selectedBranch = 'CSE'" 
+                                    :class="selectedBranch === 'CSE' ? 'bg-college-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                                    class="px-2.5 py-1 rounded text-xs transition"
+                                >
+                                    CSE
+                                </button>
+                                <button 
+                                    @click="selectedBranch = 'IT'" 
+                                    :class="selectedBranch === 'IT' ? 'bg-college-600 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'"
+                                    class="px-2.5 py-1 rounded text-xs transition"
+                                >
+                                    IT
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3 Semester Cards: II B.Tech, III B.Tech, IV B.Tech -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <template x-for="sem in semesters" :key="sem.id">
+                            <button 
+                                @click="selectSemester(sem.id)" 
+                                :class="selectedSemesterId === sem.id ? 'border-college-600 bg-college-50/70 ring-2 ring-college-500/20 shadow-sm' : 'border-slate-200 hover:border-slate-300 bg-white'"
+                                class="border rounded-2xl p-4 text-left transition flex items-start justify-between group"
+                            >
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-xs font-bold font-mono px-2 py-0.5 rounded" :class="selectedSemesterId === sem.id ? 'bg-college-600 text-white' : 'bg-slate-100 text-slate-700'" x-text="sem.regulation"></span>
+                                        <span x-show="sem.id === 'sem2_1'" class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">Current Sem</span>
+                                    </div>
+                                    <h4 class="font-extrabold text-sm text-slate-900 mt-2" x-text="sem.title"></h4>
+                                    <p class="text-xs text-slate-500 mt-0.5" x-text="sem.academicYear + ' • ' + sem.examTag"></p>
+                                    <div class="mt-3 flex items-center text-[11px] font-semibold text-college-700">
+                                        <span x-text="getSubjectsForCurrentSemester().length + ' Prescribed Subjects'"></span>
+                                        <i class="fa-solid fa-chevron-right ml-1.5 text-[9px] group-hover:translate-x-1 transition-transform"></i>
+                                    </div>
+                                </div>
+                                <i class="fa-solid fa-circle-check text-college-600 text-lg" x-show="selectedSemesterId === sem.id"></i>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- ================= SUBJECT FILTER CHIPS ================= -->
+                <!-- Subjects populated directly from official TRR Mid-I Exam timetable -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                        <div>
+                            <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center">
+                                <i class="fa-solid fa-book-open-reader text-college-600 mr-2 text-sm"></i>
+                                Prescribed Subjects for <span class="text-college-700 ml-1" x-text="currentSemesterObj?.title + ' (' + selectedBranch + ')'"></span>
+                            </h3>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Click any subject below to filter tasks, or view all active Mid-I assignments.</p>
+                        </div>
+                        <span class="text-[11px] font-mono text-slate-400" x-text="'Regulation: ' + currentSemesterObj?.regulation"></span>
+                    </div>
+
+                    <!-- Subject Chips -->
+                    <div class="flex flex-wrap gap-2 pt-1">
+                        <button 
+                            @click="selectedSubjectFilter = 'all'" 
+                            :class="selectedSubjectFilter === 'all' ? 'bg-slate-900 text-white font-bold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold'"
+                            class="px-3.5 py-1.5 rounded-xl text-xs transition"
+                        >
+                            All Subjects (<span x-text="getAssignmentsForCurrentSem().length"></span>)
+                        </button>
+
+                        <template x-for="subj in getSubjectsForCurrentSemester()" :key="subj.code">
+                            <button 
+                                @click="selectedSubjectFilter = subj.code" 
+                                :class="selectedSubjectFilter === subj.code ? 'bg-college-600 text-white font-bold shadow-sm' : 'bg-slate-50 text-slate-700 hover:bg-college-50 hover:text-college-700 border border-slate-200 font-medium'"
+                                class="px-3 py-1.5 rounded-xl text-xs flex items-center space-x-2 transition"
+                            >
+                                <span class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded" :class="selectedSubjectFilter === subj.code ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-800'" x-text="subj.code"></span>
+                                <span x-text="subj.name"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- ================= ASSIGNMENT CARDS ================= -->
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-extrabold text-slate-900 flex items-center">
+                            <span>Mid-I Assignments & Coursework</span>
+                            <span class="ml-2 text-xs font-bold text-slate-500 font-mono" x-text="'(' + filteredAssignmentsForStudent.length + ' tasks)'"></span>
+                        </h3>
+
+                        <!-- Color code legend reminder -->
+                        <div class="hidden sm:flex items-center space-x-3 text-[11px] font-bold">
+                            <span class="text-amber-700 bg-amber-100 px-2 py-0.5 rounded">● Due Soon</span>
+                            <span class="text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">● Submitted</span>
+                            <span class="text-sky-700 bg-sky-100 px-2 py-0.5 rounded">● Graded</span>
+                            <span class="text-rose-700 bg-rose-100 px-2 py-0.5 rounded">● Missing</span>
+                        </div>
+                    </div>
+
+                    <!-- Assignments Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <template x-for="item in filteredAssignmentsForStudent" :key="item.id">
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-card hover:shadow-card-hover transition-all duration-200 p-6 flex flex-col justify-between group">
+                                <div>
+                                    <!-- Header Tag: Subject Code & Status Badge -->
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex items-center space-x-1.5">
+                                            <span class="font-mono text-xs font-bold bg-slate-100 text-slate-800 px-2 py-0.5 rounded border border-slate-200" x-text="item.subjectCode"></span>
+                                            <span class="text-[10px] font-semibold text-slate-400" x-text="item.typeTag"></span>
+                                        </div>
+                                        
+                                        <!-- Strict Status Badge Coding -->
+                                        <span 
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wide"
+                                            :class="{
+                                                'bg-amber-100 text-amber-800 border border-amber-200': item.status === 'due_soon',
+                                                'bg-emerald-100 text-emerald-800 border border-emerald-200': item.status === 'submitted',
+                                                'bg-sky-100 text-sky-800 border border-sky-200': item.status === 'graded',
+                                                'bg-rose-100 text-rose-800 border border-rose-200': item.status === 'missing'
+                                            }"
+                                        >
+                                            <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="{
+                                                'bg-amber-500': item.status === 'due_soon',
+                                                'bg-emerald-500': item.status === 'submitted',
+                                                'bg-sky-500': item.status === 'graded',
+                                                'bg-rose-500': item.status === 'missing'
+                                            }"></span>
+                                            <span x-text="item.statusLabel"></span>
+                                        </span>
+                                    </div>
+
+                                    <!-- Subject Name Full -->
+                                    <span class="text-xs font-bold text-college-700 block truncate" x-text="item.subjectName"></span>
+
+                                    <!-- Assignment Title & Description -->
+                                    <h4 class="text-base font-bold text-slate-900 mt-1 group-hover:text-college-600 transition-colors" x-text="item.title"></h4>
+                                    <p class="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed" x-text="item.description"></p>
+
+                                    <!-- Draft Alert if student saved one -->
+                                    <div x-show="studentDrafts[item.id]" class="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-2.5 flex items-center justify-between text-xs text-amber-800">
+                                        <div class="flex items-center space-x-1.5">
+                                            <i class="fa-regular fa-file-lines text-amber-600"></i>
+                                            <span class="font-medium">Draft saved</span>
+                                        </div>
+                                        <span class="text-[10px] text-amber-600 font-mono" x-text="formatDateShort(studentDrafts[item.id]?.savedAt)"></span>
+                                    </div>
+
+                                    <!-- Meta details -->
+                                    <div class="mt-4 pt-4 border-t border-slate-100 space-y-2 text-xs">
+                                        <div class="flex justify-between items-center text-slate-600">
+                                            <span class="text-slate-400 flex items-center"><i class="fa-regular fa-clock mr-1.5"></i> Due Deadline:</span>
+                                            <span class="font-mono font-medium text-slate-800" x-text="item.deadline"></span>
+                                        </div>
+                                        <div class="flex justify-between items-center text-slate-600">
+                                            <span class="text-slate-400 flex items-center"><i class="fa-solid fa-file-shield mr-1.5"></i> Allowed Formats:</span>
+                                            <span class="font-mono text-slate-700 font-medium" x-text="item.allowedFormats.join(', ') + ' (max ' + item.maxSizeMB + 'MB)'"></span>
+                                        </div>
+
+                                        <!-- Graded Score callout -->
+                                        <div x-show="item.status === 'graded'" class="bg-sky-50 border border-sky-100 p-2.5 rounded-xl flex items-center justify-between mt-2">
+                                            <span class="font-bold text-sky-800 flex items-center text-xs">
+                                                <i class="fa-solid fa-star text-sky-500 mr-1.5"></i> Mid-I Marks:
+                                            </span>
+                                            <span class="font-black font-mono text-sky-900 text-sm" x-text="item.gradeScore + '/' + item.totalPoints + ' (' + calculateLetter(item.gradeScore, item.totalPoints) + ')'"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="mt-5 pt-4 border-t border-slate-100">
+                                    <template x-if="item.status === 'due_soon' || item.status === 'missing'">
+                                        <button 
+                                            @click="openAssignmentSubmission(item)" 
+                                            class="w-full bg-college-600 hover:bg-college-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 shadow-sm shadow-college-600/20 transition"
+                                        >
+                                            <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
+                                            <span>Upload & Submit Assignment</span>
+                                        </button>
+                                    </template>
+
+                                    <template x-if="item.status === 'submitted'">
+                                        <div class="flex space-x-2">
+                                            <button 
+                                                @click="viewReceiptFor(item)" 
+                                                class="flex-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition"
+                                            >
+                                                <i class="fa-solid fa-receipt text-slate-400"></i>
+                                                <span>Proof Receipt</span>
+                                            </button>
+                                            <button 
+                                                @click="openAssignmentSubmission(item)" 
+                                                class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-bold py-2 px-3 rounded-xl text-xs transition"
+                                                title="Re-upload or edit"
+                                            >
+                                                <i class="fa-solid fa-arrow-rotate-right"></i>
+                                            </button>
+                                        </div>
+                                    </template>
+
+                                    <template x-if="item.status === 'graded'">
+                                        <button 
+                                            @click="openGradeDetails(item)" 
+                                            class="w-full bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-800 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 transition"
+                                        >
+                                            <i class="fa-solid fa-clipboard-check text-sky-600"></i>
+                                            <span>View Faculty Marks & Rubric</span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div x-show="filteredAssignmentsForStudent.length === 0" class="bg-white rounded-2xl border border-slate-200 p-12 text-center my-6">
+                        <i class="fa-regular fa-folder-open text-4xl text-slate-300 mb-3"></i>
+                        <h4 class="font-bold text-slate-800 text-sm">No Assignments Found</h4>
+                        <p class="text-xs text-slate-500 mt-1">There are no assignments matching the selected subject filter in this semester.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= SUBMISSION PAGE ================= -->
+            <div x-show="studentView === 'submit'" class="max-w-4xl mx-auto space-y-5">
+                <div class="flex items-center justify-between">
+                    <button @click="studentView = 'dashboard'" class="inline-flex items-center space-x-2 text-slate-600 hover:text-slate-900 font-bold text-xs bg-white border border-slate-200 px-3.5 py-2 rounded-xl shadow-xs transition">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Back to Subject Tasks</span>
+                    </button>
+                    <span class="text-xs font-mono text-slate-400" x-text="activeAssignment?.subjectCode + ' • Assignment #' + activeAssignment?.id"></span>
+                </div>
+
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-soft overflow-hidden">
+                    <!-- Banner -->
+                    <div class="bg-gradient-to-r from-college-900 via-college-800 to-slate-900 p-6 sm:p-8 text-white">
+                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                            <span class="font-mono text-xs font-bold bg-white/20 text-white px-2.5 py-0.5 rounded" x-text="activeAssignment?.subjectCode"></span>
+                            <span class="text-xs text-blue-200 font-semibold" x-text="activeAssignment?.subjectName"></span>
+                            <span class="text-xs text-slate-400 font-mono ml-auto" x-text="'Due: ' + activeAssignment?.deadline"></span>
+                        </div>
+                        <h2 class="text-xl sm:text-2xl font-black" x-text="activeAssignment?.title"></h2>
+                        <p class="text-slate-300 text-xs sm:text-sm mt-2 leading-relaxed" x-text="activeAssignment?.description"></p>
+                    </div>
+
+                    <div class="p-6 sm:p-8 space-y-6">
+                        <!-- Student Identity Confirmation Box -->
+                        <div class="bg-blue-50/70 border border-blue-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-9 h-9 rounded-xl bg-college-700 text-white flex items-center justify-center font-bold text-xs">DS</div>
+                                <div>
+                                    <span class="font-extrabold text-slate-900">Submitting as: Student Nine</span>
+                                    <span class="text-slate-500 block font-mono">Roll No: <strong>25CSE1009</strong> • CSE II Year</span>
+                                </div>
+                            </div>
+                            <span class="text-college-700 bg-white px-3 py-1 rounded-lg border border-blue-200 font-semibold font-mono text-right">
+                                JNTUH Regulation R25
+                            </span>
+                        </div>
+
+                        <!-- Dropzone Upload Area -->
+                        <div>
+                            <label class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-2">
+                                Upload File (PDF / Handwritten Scans / Code File)
+                            </label>
+
+                            <div 
+                                @dragover.prevent="dropzoneActive = true" 
+                                @dragleave.prevent="dropzoneActive = false" 
+                                @drop.prevent="handleFileDrop($event)"
+                                @click="$refs.fileInput.click()"
+                                :class="{
+                                    'border-college-600 bg-college-50/60 custom-dropzone-pulse': dropzoneActive,
+                                    'border-slate-300 hover:border-college-400 bg-slate-50/70 hover:bg-slate-50': !dropzoneActive && !submissionFile,
+                                    'border-emerald-500 bg-emerald-50/40': submissionFile && !uploadError
+                                }"
+                                class="border-2 border-dashed rounded-3xl p-8 sm:p-12 text-center cursor-pointer transition-all duration-150 relative group"
+                            >
+                                <input 
+                                    type="file" 
+                                    x-ref="fileInput" 
+                                    class="hidden" 
+                                    @change="handleFileInput($event)"
+                                    :accept="activeAssignment?.allowedFormats.map(f => '.' + f.toLowerCase()).join(',')"
+                                >
+
+                                <div x-show="!submissionFile">
+                                    <div class="w-16 h-16 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center mx-auto mb-4 group-hover:scale-105 group-hover:border-college-300 transition-all">
+                                        <i class="fa-solid fa-cloud-arrow-up text-2xl text-college-600"></i>
+                                    </div>
+                                    <p class="text-sm font-bold text-slate-800">
+                                        Drag & drop assignment sheet or click to browse
+                                    </p>
+                                    <p class="text-xs text-slate-500 mt-1">
+                                        Accepted formats: <span class="font-mono font-bold text-slate-700" x-text="activeAssignment?.allowedFormats.join(', ')"></span> (Max <span x-text="activeAssignment?.maxSizeMB"></span> MB)
+                                    </p>
+                                </div>
+
+                                <!-- File Preview -->
+                                <div x-show="submissionFile" class="flex flex-col items-center">
+                                    <template x-if="submissionFilePreview">
+                                        <img :src="submissionFilePreview" class="w-28 h-28 object-cover rounded-xl border border-slate-200 shadow-md mb-3" alt="Preview">
+                                    </template>
+                                    <template x-if="!submissionFilePreview">
+                                        <div class="w-14 h-14 rounded-2xl bg-college-50 border border-college-200 flex items-center justify-center mb-2">
+                                            <i class="fa-solid fa-file-pdf text-2xl text-rose-500"></i>
+                                        </div>
+                                    </template>
+
+                                    <p class="text-xs font-bold text-slate-900 font-mono" x-text="submissionFile?.name"></p>
+                                    <p class="text-[11px] text-slate-500 font-mono mt-0.5" x-text="formatBytes(submissionFile?.size)"></p>
+                                    <button 
+                                        @click.stop="removeFile()" 
+                                        class="mt-3 text-xs text-rose-600 hover:text-rose-800 font-semibold bg-white border border-rose-200 px-3 py-1 rounded-lg shadow-xs"
+                                    >
+                                        <i class="fa-solid fa-trash mr-1"></i> Replace File
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Error Message -->
+                            <div x-show="uploadError" class="mt-3 bg-rose-50 border border-rose-200 text-rose-800 px-4 py-3 rounded-xl text-xs flex items-center justify-between">
+                                <span class="font-medium" x-text="uploadError"></span>
+                                <button @click="uploadError = null" class="text-rose-400 hover:text-rose-600"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div x-show="isUploading" class="space-y-1.5">
+                            <div class="flex justify-between text-xs font-semibold">
+                                <span class="text-college-700 flex items-center">
+                                    <i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Uploading to TRR Evaluation Server...
+                                </span>
+                                <span class="font-mono text-slate-600" x-text="uploadProgress + '%'"></span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                                <div class="bg-college-600 h-2 rounded-full transition-all duration-150" :style="'width: ' + uploadProgress + '%'"></div>
+                            </div>
+                        </div>
+
+                        <!-- Student Remarks -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                                Additional Comments / Question Notes (Optional)
+                            </label>
+                            <textarea 
+                                x-model="submissionNotes" 
+                                rows="2" 
+                                placeholder="E.g. Completed all 5 questions from Unit-1 and Unit-2..."
+                                class="w-full text-xs rounded-xl border border-slate-300 focus:border-college-500 focus:ring-1 focus:ring-college-500 p-3 bg-white"
+                            ></textarea>
+                        </div>
+
+                        <!-- Footer Actions -->
+                        <div class="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                            <button 
+                                type="button" 
+                                @click="studentView = 'dashboard'" 
+                                class="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50 transition"
+                            >
+                                Cancel
+                            </button>
+
+                            <div class="w-full sm:w-auto flex space-x-3">
+                                <button 
+                                    type="button" 
+                                    @click="saveStudentDraft()" 
+                                    class="flex-1 sm:flex-none px-5 py-2.5 rounded-xl border border-college-300 bg-college-50/60 hover:bg-college-100 text-college-800 font-bold text-xs transition flex items-center justify-center space-x-1.5"
+                                >
+                                    <i class="fa-regular fa-floppy-disk"></i>
+                                    <span>Save Draft</span>
+                                </button>
+
+                                <button 
+                                    type="button" 
+                                    @click="submitAssignment()" 
+                                    :disabled="!submissionFile || isUploading"
+                                    class="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-college-600 hover:bg-college-700 text-white font-bold text-xs shadow-md shadow-college-600/20 disabled:opacity-50 transition flex items-center justify-center space-x-2"
+                                >
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                    <span>Submit Final Work</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ========================================================================= -->
+        <!--                         FACULTY / INSTRUCTOR PORTAL                       -->
+        <!-- ========================================================================= -->
+        <div x-show="currentRole === 'instructor'" class="h-full flex flex-col">
+            
+            <!-- INSTRUCTOR DASHBOARD: ROLL NUMBER ORDER LIST -->
+            <div x-show="instructorView === 'dashboard'" class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+                
+                <!-- Faculty Header -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-college-100 text-college-800">Faculty Evaluation Panel</span>
+                            <span class="text-xs text-slate-400 font-medium">TRR College of Technology • Dept of CSE</span>
+                        </div>
+                        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 mt-1">Roll Number Submission Ledger</h1>
+                        <p class="text-xs text-slate-500 mt-0.5">Track student submissions ordered sequentially by JNTUH Roll Number.</p>
+                    </div>
+
+                    <!-- Fast Action: Copy Missing Roll Numbers (Solves real faculty WhatsApp/broadcast problem!) -->
+                    <div class="flex items-center space-x-3">
+                        <button 
+                            @click="copyMissingRollNumbers()" 
+                            class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs px-3.5 py-2.5 rounded-xl flex items-center space-x-2 transition"
+                            title="Copy list of roll numbers who haven't submitted yet"
+                        >
+                            <i class="fa-solid fa-bullhorn text-rose-500"></i>
+                            <span>Copy Missing Roll Numbers</span>
+                        </button>
+
+                        <button 
+                            @click="showCreateModal = true" 
+                            class="bg-college-600 hover:bg-college-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-college-600/20 flex items-center space-x-2 transition"
+                        >
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add New Assignment</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Assignment Filter & Search Bar -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-4">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <!-- Subject / Task Selection -->
+                        <div class="flex items-center space-x-2">
+                            <label class="text-xs font-bold text-slate-700 uppercase">Select Subject Task:</label>
+                            <select 
+                                x-model="selectedFacultyAssignmentId" 
+                                class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:ring-college-500 focus:border-college-500"
+                            >
+                                <template x-for="task in assignments" :key="task.id">
+                                    <option :value="task.id" x-text="task.subjectCode + ': ' + task.title"></option>
+                                </template>
+                            </select>
+                        </div>
+
+                        <!-- Search Box: Roll Number or Name Search -->
+                        <div class="relative w-full md:w-72">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                            <input 
+                                type="text" 
+                                x-model="searchQuery" 
+                                placeholder="Search Roll Number (e.g. 0509) or Name..."
+                                class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-xl font-mono focus:bg-white focus:ring-1 focus:ring-college-500"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Filter Tabs: All, Submitted, Graded, Missing -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                        <div class="flex items-center space-x-1.5 overflow-x-auto">
+                            <button 
+                                @click="facultyStatusFilter = 'all'" 
+                                :class="facultyStatusFilter === 'all' ? 'bg-slate-900 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                                class="px-3 py-1 rounded-lg text-xs transition"
+                            >
+                                All Students (<span x-text="allStudentsInOrder.length"></span>)
+                            </button>
+                            <button 
+                                @click="facultyStatusFilter = 'submitted'" 
+                                :class="facultyStatusFilter === 'submitted' ? 'bg-emerald-600 text-white font-bold' : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'"
+                                class="px-3 py-1 rounded-lg text-xs transition"
+                            >
+                                Submitted
+                            </button>
+                            <button 
+                                @click="facultyStatusFilter = 'graded'" 
+                                :class="facultyStatusFilter === 'graded' ? 'bg-sky-600 text-white font-bold' : 'bg-sky-50 text-sky-800 hover:bg-sky-100'"
+                                class="px-3 py-1 rounded-lg text-xs transition"
+                            >
+                                Graded
+                            </button>
+                            <button 
+                                @click="facultyStatusFilter = 'missing'" 
+                                :class="facultyStatusFilter === 'missing' ? 'bg-rose-600 text-white font-bold' : 'bg-rose-50 text-rose-800 hover:bg-rose-100'"
+                                class="px-3 py-1 rounded-lg text-xs transition"
+                            >
+                                Missing (<span x-text="allStudentsInOrder.filter(s => s.status === 'missing').length"></span>)
+                            </button>
+                        </div>
+
+                        <!-- Sort Toggle Button -->
+                        <button 
+                            @click="toggleRollSort()" 
+                            class="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center space-x-1.5 bg-slate-50 border border-slate-200 px-3 py-1 rounded-lg"
+                        >
+                            <i class="fa-solid fa-arrow-down-1-9 text-college-600"></i>
+                            <span>Sort: <strong x-text="rollSortOrder === 'asc' ? 'Roll No (0501 → 0512)' : 'Roll No (0512 → 0501)'"></strong></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ================= ROLL NUMBER ORDER TABLE ================= -->
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-soft overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                                    <th class="py-3.5 px-6">Roll Number</th>
+                                    <th class="py-3.5 px-6">Student Name</th>
+                                    <th class="py-3.5 px-6">Submission Status</th>
+                                    <th class="py-3.5 px-6">Attachment File</th>
+                                    <th class="py-3.5 px-6">Timestamp</th>
+                                    <th class="py-3.5 px-6">Awarded Score</th>
+                                    <th class="py-3.5 px-6 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-xs">
+                                <template x-for="student in sortedFacultyStudentList" :key="student.rollNumber">
+                                    <tr 
+                                        class="hover:bg-slate-50/80 transition-colors"
+                                        :class="student.rollNumber === '25CSE1009' ? 'bg-blue-50/50 font-medium' : ''"
+                                    >
+                                        <!-- Roll Number Column (Highlighted) -->
+                                        <td class="py-4 px-6">
+                                            <div class="flex items-center space-x-2">
+                                                <span 
+                                                    class="font-mono font-extrabold text-xs px-2.5 py-1 rounded-lg"
+                                                    :class="student.rollNumber === '25CSE1009' ? 'bg-college-600 text-white shadow-xs' : 'bg-slate-100 text-slate-800 border border-slate-200'"
+                                                    x-text="student.rollNumber"
+                                                ></span>
+                                                <span x-show="student.rollNumber === '25CSE1009'" class="text-[10px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.2 rounded">YOU</span>
+                                            </div>
+                                        </td>
+
+                                        <!-- Student Name -->
+                                        <td class="py-4 px-6 font-bold text-slate-900">
+                                            <div class="flex items-center space-x-2.5">
+                                                <div class="w-7 h-7 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-[10px]" x-text="student.name.substring(0,2)"></div>
+                                                <span x-text="student.name"></span>
+                                            </div>
+                                        </td>
+
+                                        <!-- Status Badge -->
+                                        <td class="py-4 px-6">
+                                            <span 
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide"
+                                                :class="{
+                                                    'bg-emerald-100 text-emerald-800 border border-emerald-200': student.status === 'submitted',
+                                                    'bg-rose-100 text-rose-800 border border-rose-200': student.status === 'missing',
+                                                    'bg-sky-100 text-sky-800 border border-sky-200': student.status === 'graded',
+                                                    'bg-amber-100 text-amber-800 border border-amber-200': student.status === 'late'
+                                                }"
+                                            >
+                                                <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="{
+                                                    'bg-emerald-500': student.status === 'submitted',
+                                                    'bg-rose-500': student.status === 'missing',
+                                                    'bg-sky-500': student.status === 'graded',
+                                                    'bg-amber-500': student.status === 'late'
+                                                }"></span>
+                                                <span x-text="student.statusLabel"></span>
+                                            </span>
+                                        </td>
+
+                                        <!-- File -->
+                                        <td class="py-4 px-6 font-mono text-[11px]">
+                                            <template x-if="student.fileName">
+                                                <span class="text-slate-700 flex items-center">
+                                                    <i class="fa-solid fa-file-lines text-college-500 mr-1.5"></i>
+                                                    <span class="truncate max-w-[140px]" x-text="student.fileName"></span>
+                                                </span>
+                                            </template>
+                                            <template x-if="!student.fileName">
+                                                <span class="text-slate-400 italic">No file attached</span>
+                                            </template>
+                                        </td>
+
+                                        <!-- Submission Time -->
+                                        <td class="py-4 px-6 font-mono text-slate-500 text-[11px]" x-text="student.submittedAt || '—'"></td>
+
+                                        <!-- Score -->
+                                        <td class="py-4 px-6 font-mono">
+                                            <template x-if="student.status === 'graded'">
+                                                <span class="font-extrabold text-sky-700 text-xs" x-text="student.score + '/100'"></span>
+                                            </template>
+                                            <template x-if="student.status !== 'graded'">
+                                                <span class="text-slate-300">—</span>
+                                            </template>
+                                        </td>
+
+                                        <!-- Action Buttons -->
+                                        <td class="py-4 px-6 text-right">
+                                            <template x-if="student.status === 'submitted' || student.status === 'graded'">
+                                                <button 
+                                                    @click="openGradingScreen(student)" 
+                                                    class="inline-flex items-center space-x-1.5 bg-college-50 hover:bg-college-100 text-college-700 border border-college-200 px-3 py-1.5 rounded-xl font-bold text-xs transition"
+                                                >
+                                                    <i class="fa-solid fa-feather-pointed"></i>
+                                                    <span x-text="student.status === 'graded' ? 'Review & Edit' : 'Evaluate & Grade'"></span>
+                                                </button>
+                                            </template>
+                                            <template x-if="student.status === 'missing'">
+                                                <button 
+                                                    @click="sendSingleReminder(student)" 
+                                                    class="text-slate-400 hover:text-slate-700 text-xs font-semibold px-2 py-1"
+                                                >
+                                                    <i class="fa-regular fa-bell mr-1"></i> Remind
+                                                </button>
+                                            </template>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= DUAL-PANE SPLIT-SCREEN GRADING ================= -->
+            <div x-show="instructorView === 'grading'" class="flex-1 flex flex-col overflow-hidden bg-slate-900">
+                <!-- Bar -->
+                <div class="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between text-white shrink-0">
+                    <div class="flex items-center space-x-4">
+                        <button @click="instructorView = 'dashboard'" class="text-slate-400 hover:text-white transition flex items-center text-xs space-x-1.5">
+                            <i class="fa-solid fa-arrow-left"></i>
+                            <span>Back to Roll Order Table</span>
+                        </button>
+                        <div class="h-4 w-px bg-slate-700"></div>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-mono bg-college-600 text-white font-bold text-xs px-2.5 py-0.5 rounded" x-text="activeGradingStudent?.rollNumber"></span>
+                            <span class="font-bold text-xs text-white" x-text="activeGradingStudent?.name"></span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-slate-800 px-3.5 py-1.5 rounded-lg border border-slate-700 flex items-center space-x-2">
+                            <span class="text-xs text-slate-400">Total Marks:</span>
+                            <span class="text-sm font-extrabold text-emerald-400 font-mono" x-text="calculateGradingTotal() + ' / 100'"></span>
+                        </div>
+                        <button 
+                            @click="publishStudentGrade()" 
+                            class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2 rounded-xl shadow-lg transition flex items-center space-x-1.5"
+                        >
+                            <i class="fa-solid fa-check"></i>
+                            <span>Save & Publish Marks</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dual-Pane Viewport -->
+                <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+                    
+                    <!-- LEFT PANE: Document Preview (65%) -->
+                    <div class="flex-1 md:w-[65%] bg-slate-950 flex flex-col overflow-hidden border-r border-slate-800">
+                        <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-2 flex items-center justify-between text-xs text-slate-400 shrink-0">
+                            <span class="text-slate-300 font-medium font-mono" x-text="activeGradingStudent?.fileName || 'Student_CS303PC_Assignment.pdf'"></span>
+                            <div class="flex items-center space-x-3">
+                                <button @click="docZoom = Math.max(50, docZoom - 10)" class="hover:text-white"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                                <span class="font-mono text-xs text-slate-300" x-text="docZoom + '%'"></span>
+                                <button @click="docZoom = Math.min(200, docZoom + 10)" class="hover:text-white"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- Document Sheet -->
+                        <div class="flex-1 overflow-auto p-8 flex items-center justify-center bg-slate-950">
+                            <div 
+                                class="bg-white rounded-lg shadow-2xl transition-all duration-150 p-8 text-slate-900 border border-slate-300" 
+                                :style="'transform: scale(' + (docZoom / 100) + '); transform-origin: top center; width: 680px; min-height: 850px;'"
+                            >
+                                <div class="border-b-2 border-slate-800 pb-4 mb-6">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h2 class="text-sm font-black uppercase text-college-800">TRR COLLEGE OF TECHNOLOGY</h2>
+                                            <h3 class="text-base font-extrabold text-slate-900 mt-1">Mid-I Assignment: Object Oriented Programming (Java)</h3>
+                                            <p class="text-xs text-slate-500 mt-0.5">Subject Code: <strong>CS303PC</strong> • II B.Tech I Semester (R25)</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="bg-slate-100 font-mono text-xs px-2 py-1 rounded font-bold" x-text="activeGradingStudent?.rollNumber"></span>
+                                            <p class="text-xs font-bold text-slate-800 mt-1" x-text="activeGradingStudent?.name"></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-4 text-xs">
+                                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                        <h4 class="font-bold text-slate-800 mb-1">Question 1: Explain Java Memory Model & JVM Execution</h4>
+                                        <p class="text-slate-600 leading-relaxed">
+                                            The Java Virtual Machine (JVM) divides runtime memory into Method Area, Heap, Java Stacks, PC Registers, and Native Method Stacks. Objects are instantiated inside Heap memory and garbage collected using generational mark-and-sweep.
+                                        </p>
+                                    </div>
+
+                                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                        <h4 class="font-bold text-slate-800 mb-1">Question 2: Implement Interface & Method Overriding Polymorphism</h4>
+                                        <pre class="bg-slate-900 text-emerald-400 p-3 rounded font-mono text-[11px] overflow-x-auto">
+interface DatabaseConnection {
+    void connect();
+}
+class MySQLConnection implements DatabaseConnection {
+    @Override
+    public void connect() {
+        System.out.println("Connected to MySQL on port 3306");
+    }
+}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT PANE: Rubric & Remarks (35%) -->
+                    <div class="w-full md:w-[35%] bg-white flex flex-col overflow-y-auto border-l border-slate-200 p-6 space-y-6">
+                        <div class="border-b border-slate-100 pb-3">
+                            <h3 class="font-black text-sm text-slate-900 flex items-center">
+                                <i class="fa-solid fa-list-check text-college-600 mr-2"></i>
+                                Evaluation Rubric (JNTUH Format)
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Assign marks per criterion or select quick presets.</p>
+                        </div>
+
+                        <!-- Criterion 1 -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
+                            <div class="flex justify-between items-center">
+                                <label class="font-bold text-slate-800">1. Conceptual Depth & Theory</label>
+                                <div class="flex items-center space-x-1">
+                                    <input type="number" x-model="rubricScore1" min="0" max="30" class="w-14 bg-white border border-slate-300 rounded px-2 py-1 text-xs font-mono font-bold text-right">
+                                    <span class="text-slate-400 font-mono">/ 30</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-1 pt-1">
+                                <button @click="rubricScore1 = 30" class="text-[10px] font-semibold py-1 rounded border bg-white hover:bg-emerald-50 text-slate-700">30 (Max)</button>
+                                <button @click="rubricScore1 = 25" class="text-[10px] font-semibold py-1 rounded border bg-white hover:bg-sky-50 text-slate-700">25 (Good)</button>
+                                <button @click="rubricScore1 = 18" class="text-[10px] font-semibold py-1 rounded border bg-white hover:bg-amber-50 text-slate-700">18 (Avg)</button>
+                            </div>
+                        </div>
+
+                        <!-- Criterion 2 -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
+                            <div class="flex justify-between items-center">
+                                <label class="font-bold text-slate-800">2. Code Correctness & Syntax</label>
+                                <div class="flex items-center space-x-1">
+                                    <input type="number" x-model="rubricScore2" min="0" max="40" class="w-14 bg-white border border-slate-300 rounded px-2 py-1 text-xs font-mono font-bold text-right">
+                                    <span class="text-slate-400 font-mono">/ 40</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-1 pt-1">
+                                <button @click="rubricScore2 = 40" class="text-[10px] font-semibold py-1 rounded border bg-white hover:bg-emerald-50 text-slate-700">40 (Max)</button>
+                                <button @click="rubricScore2 = 35" class="text-[10px] font-semibold py-1 rounded border bg-white hover:bg-sky-50 text-slate-700">35 (Good)</button>
+                                <button @click="rubricScore2 = 25" class="text-[10px] font-semibold py-1 rounded border bg-white hover:bg-amber-50 text-slate-700">25 (Avg)</button>
+                            </div>
+                        </div>
+
+                        <!-- Criterion 3 -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
+                            <div class="flex justify-between items-center">
+                                <label class="font-bold text-slate-800">3. Timeliness & Presentation</label>
+                                <div class="flex items-center space-x-1">
+                                    <input type="number" x-model="rubricScore3" min="0" max="30" class="w-14 bg-white border border-slate-300 rounded px-2 py-1 text-xs font-mono font-bold text-right">
+                                    <span class="text-slate-400 font-mono">/ 30</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-1 pt-1">
+                                <button @click="rubricScore3 = 30" class="text-[10px] font-semibold py-1 rounded border bg-white hover:bg-emerald-50 text-slate-700">30 (Max)</button>
+                                <button @click="rubricScore3 = 26" class="text-[10px] font-semibold py-1 rounded border bg-white hover:bg-sky-50 text-slate-700">26 (Good)</button>
+                                <button @click="rubricScore3 = 18" class="text-[10px] font-semibold py-1 rounded border bg-white hover:bg-amber-50 text-slate-700">18 (Avg)</button>
+                            </div>
+                        </div>
+
+                        <!-- Qualitative Feedback -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                Faculty Remarks
+                            </label>
+                            <textarea 
+                                x-model="facultyFeedbackText" 
+                                rows="3" 
+                                class="w-full text-xs rounded-xl border border-slate-300 focus:border-college-500 p-2.5 bg-white"
+                            ></textarea>
+                        </div>
+
+                        <div class="pt-2">
+                            <button 
+                                @click="publishStudentGrade()" 
+                                class="w-full bg-college-600 hover:bg-college-700 text-white font-bold text-xs py-3 rounded-xl shadow-md transition"
+                            >
+                                Publish Grade & Sync Student Ledger
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ========================================================================= -->
+    <!--                         MODALS & RECEIPTS                                 -->
+    <!-- ========================================================================= -->
+
+    <!-- DIGITAL SUBMISSION RECEIPT MODAL -->
+    <div x-show="showReceiptModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div @click.away="showReceiptModal = false" class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
+            <div class="text-center">
+                <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-4">
+                    <i class="fa-solid fa-shield-check"></i>
+                </div>
+                <span class="text-[11px] font-black text-college-700 uppercase tracking-wider">TRR College of Technology</span>
+                <h3 class="text-lg font-black text-slate-900 mt-1">Official Submission Receipt</h3>
+                <p class="text-xs text-slate-500 mt-1">Your coursework has been logged into the college evaluation server.</p>
+            </div>
+
+            <div class="mt-6 bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-2.5 font-mono text-xs">
+                <div class="flex justify-between pb-2 border-b border-slate-200">
+                    <span class="text-slate-400">Student:</span>
+                    <span class="font-bold text-slate-900">Student Nine</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Roll Number:</span>
+                    <span class="font-bold text-college-700">25CSE1009</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Subject:</span>
+                    <span class="font-semibold text-slate-800" x-text="activeReceipt?.subjectTitle"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Receipt Ref:</span>
+                    <span class="font-bold text-brand-600" x-text="activeReceipt?.id"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">File Payload:</span>
+                    <span class="font-semibold text-slate-800" x-text="activeReceipt?.fileName + ' (' + activeReceipt?.fileSize + ')'"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-400">Timestamp:</span>
+                    <span class="text-slate-700" x-text="activeReceipt?.timestamp"></span>
+                </div>
+                <div class="pt-2 border-t border-slate-200">
+                    <span class="text-slate-400 block text-[10px]">SHA-256 Verification Hash:</span>
+                    <span class="text-[10px] text-slate-600 break-all select-all" x-text="activeReceipt?.checksum"></span>
+                </div>
+            </div>
+
+            <div class="mt-6 flex space-x-3">
+                <button 
+                    @click="downloadReceiptText()" 
+                    class="flex-1 bg-college-600 hover:bg-college-700 text-white font-bold text-xs py-2.5 rounded-xl shadow-md flex items-center justify-center space-x-2 transition"
+                >
+                    <i class="fa-solid fa-download"></i>
+                    <span>Download Receipt (.txt)</span>
+                </button>
+                <button @click="showReceiptModal = false" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRADE DETAILS MODAL -->
+    <div x-show="showGradeDetailsModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div @click.away="showGradeDetailsModal = false" class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div>
+                    <span class="text-xs font-bold text-sky-600 uppercase tracking-wider">Evaluation Marks</span>
+                    <h3 class="text-lg font-black text-slate-900" x-text="activeGradeAssignment?.title"></h3>
+                    <p class="text-xs text-slate-500 font-mono" x-text="activeGradeAssignment?.subjectCode + ' • Student Portal'"></p>
+                </div>
+                <div class="text-right">
+                    <span class="text-2xl font-black text-sky-600 font-mono" x-text="activeGradeAssignment?.gradeScore + '/' + activeGradeAssignment?.totalPoints"></span>
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase" x-text="'Grade: ' + calculateLetter(activeGradeAssignment?.gradeScore, activeGradeAssignment?.totalPoints)"></span>
+                </div>
+            </div>
+
+            <div class="mt-6 space-y-3 text-xs">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex justify-between items-center">
+                    <span class="text-slate-700 font-medium">1. Theory & Core Logic</span>
+                    <span class="font-bold font-mono text-emerald-700">28 / 30</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex justify-between items-center">
+                    <span class="text-slate-700 font-medium">2. Code Implementation & Syntax</span>
+                    <span class="font-bold font-mono text-emerald-700">38 / 40</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex justify-between items-center">
+                    <span class="text-slate-700 font-medium">3. Timeliness & Presentation</span>
+                    <span class="font-bold font-mono text-emerald-700">28 / 30</span>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-100">
+                    <h5 class="font-bold text-slate-800 mb-1">Faculty Feedback:</h5>
+                    <p class="bg-sky-50 p-3 rounded-xl text-slate-700 italic border border-sky-100">
+                        "<span x-text="activeGradeAssignment?.feedback || 'Well written answers. Clean code indentation and clear explanation of JVM architecture.'"></span>"
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button @click="showGradeDetailsModal = false" class="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CREATE ASSIGNMENT MODAL -->
+    <div x-show="showCreateModal" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div @click.away="showCreateModal = false" class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div>
+                    <h3 class="text-lg font-black text-slate-900">Add New Assignment (TRR Schedule)</h3>
+                    <p class="text-xs text-slate-500">Add Mid-I or Mid-II coursework for any prescribed subject.</p>
+                </div>
+                <button @click="showCreateModal = false" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <form @submit.prevent="createNewAssignmentSubmit()" class="mt-6 space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Assignment Title</label>
+                    <input type="text" x-model="newAssignment.title" required placeholder="e.g. Mid-I Assignment 2: Database Normalization" class="w-full border rounded-xl p-2.5 text-xs">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Subject</label>
+                        <select x-model="newAssignment.subjectCode" class="w-full border rounded-xl p-2.5 text-xs">
+                            <option value="CS303PC">Java Programming (CS303PC)</option>
+                            <option value="CS305PC">DBMS (CS305PC)</option>
+                            <option value="CS304PC">Software Engineering (CS304PC)</option>
+                            <option value="CS302PC">Computer Org & Arch (CS302PC)</option>
+                            <option value="CS301PC">Discrete Mathematics (CS301PC)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">Due Deadline</label>
+                        <input type="text" x-model="newAssignment.deadline" required placeholder="e.g. Tomorrow, 11:59 PM" class="w-full border rounded-xl p-2.5 text-xs">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Description / Question Questions</label>
+                    <textarea x-model="newAssignment.description" rows="3" placeholder="Provide problem numbers or instructions..." class="w-full border rounded-xl p-2.5 text-xs"></textarea>
+                </div>
+                <div class="pt-3 flex justify-end space-x-3">
+                    <button type="button" @click="showCreateModal = false" class="px-4 py-2 border rounded-xl font-bold">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-college-600 hover:bg-college-700 text-white rounded-xl font-bold shadow-md">Publish Assignment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!--                     JAVASCRIPT REACTIVE APP STATE                         -->
+    <!-- ========================================================================= -->
+    <script>
+        function academicPortalApp() {
+            return {
+                // Role & Persona State
+                currentRole: 'student', // 'student' | 'instructor'
+                studentView: 'dashboard', // 'dashboard' | 'submit'
+                instructorView: 'dashboard', // 'dashboard' | 'grading'
+
+                // Year & Semester Structure (Directly from official TRR Examination Schedule)
+                semesters: [
+                    {
+                        id: 'sem2_1',
+                        title: 'II B.Tech I Semester',
+                        regulation: 'Reg: R25',
+                        academicYear: 'A.Y. 2026-27',
+                        examTag: 'Mid-I Scheduled'
+                    },
+                    {
+                        id: 'sem3_1',
+                        title: 'III B.Tech I Semester',
+                        regulation: 'Reg: R22',
+                        academicYear: 'A.Y. 2026-27',
+                        examTag: 'Mid-I Scheduled'
+                    },
+                    {
+                        id: 'sem4_1',
+                        title: 'IV B.Tech I Semester',
+                        regulation: 'Reg: R22',
+                        academicYear: 'A.Y. 2026-27',
+                        examTag: 'Mid-I Scheduled'
+                    }
+                ],
+                selectedSemesterId: 'sem2_1',
+                selectedBranch: 'CSE', // 'CSE' | 'IT'
+                selectedSubjectFilter: 'all',
+
+                // Prescribed Subjects from the uploaded schedule
+                curriculumSubjects: {
+                    'sem2_1': {
+                        'CSE': [
+                            { code: 'CS301PC', name: 'Discrete Mathematics' },
+                            { code: 'CS302PC', name: 'Computer Organization and Architecture' },
+                            { code: 'CS303PC', name: 'Object Oriented Programming through Java' },
+                            { code: 'CS304PC', name: 'Software Engineering' },
+                            { code: 'CS305PC', name: 'Database Management Systems' },
+                            { code: 'MS306HS', name: 'Innovation and Entrepreneurship' },
+                            { code: 'VA300ES', name: 'Environmental Science' }
+                        ],
+                        'IT': [
+                            { code: 'MA301BS', name: 'Mathematical and Statistical Foundations' },
+                            { code: 'IT302PC', name: 'Computer Organization & Microprocessor' },
+                            { code: 'IT303PC', name: 'Java Programming' },
+                            { code: 'IT304PC', name: 'Operating Systems' },
+                            { code: 'IT305PC', name: 'Introduction to IoT' }
+                        ]
+                    },
+                    'sem3_1': {
+                        'CSE': [
+                            { code: 'CS501PC', name: 'Design and Analysis of Algorithms' },
+                            { code: 'CS502PC', name: 'Computer Networks' },
+                            { code: 'CS503PC', name: 'DevOps' },
+                            { code: 'CS515PE', name: 'Principles of Programming Languages' },
+                            { code: 'CS524PE', name: 'Distributed Databases' }
+                        ],
+                        'IT': [
+                            { code: 'IT501PC', name: 'Software Engineering' },
+                            { code: 'IT502PC', name: 'Data Communications and Computer Networks' },
+                            { code: 'IT503PC', name: 'Machine Learning' },
+                            { code: 'IT515PE', name: 'Principles of Programming Languages' },
+                            { code: 'IT524PE', name: 'Distributed Databases' }
+                        ]
+                    },
+                    'sem4_1': {
+                        'CSE': [
+                            { code: 'CS701PC', name: 'Cryptography and Network Security' },
+                            { code: 'CS702PC', name: 'Compiler Design' },
+                            { code: 'CS755PE', name: 'Software Process & Project Management' },
+                            { code: 'PE-IV', name: 'Cloud Computing' },
+                            { code: 'PE-VI', name: 'Natural Language Processing' }
+                        ],
+                        'IT': [
+                            { code: 'IT701PC', name: 'Information Security' },
+                            { code: 'IT702PC', name: 'Artificial Intelligence' },
+                            { code: 'IT755PE', name: 'Software Process & Project Management' },
+                            { code: 'PE-IV', name: 'Cloud Computing' },
+                            { code: 'PE-VI', name: 'Natural Language Processing' }
+                        ]
+                    }
+                },
+
+                // Assignments List
+                assignments: [],
+
+                // Faculty Roll Number Order Student List
+                allStudentsInOrder: [],
+                rollSortOrder: 'asc', // 'asc' | 'desc'
+                searchQuery: '',
+                facultyStatusFilter: 'all',
+                selectedFacultyAssignmentId: 1,
+
+                // Active objects
+                activeAssignment: null,
+                activeReceipt: null,
+                activeGradeAssignment: null,
+                activeGradingStudent: null,
+
+                // File Handling & Upload
+                submissionFile: null,
+                submissionFilePreview: null,
+                submissionNotes: '',
+                dropzoneActive: false,
+                uploadError: null,
+                isUploading: false,
+                uploadProgress: 0,
+                studentDrafts: {},
+
+                // Modals
+                showReceiptModal: false,
+                showGradeDetailsModal: false,
+                showCreateModal: false,
+
+                // Rubric Scores
+                rubricScore1: 28,
+                rubricScore2: 38,
+                rubricScore3: 28,
+                facultyFeedbackText: 'Clean Java code, proper interface overriding, and well-organized answers.',
+                docZoom: 100,
+
+                // New Assignment Form State
+                newAssignment: {
+                    title: '',
+                    subjectCode: 'CS303PC',
+                    deadline: 'Tomorrow, 11:59 PM',
+                    description: 'Complete all prescribed assignment questions.'
+                },
+
+                // Toasts
+                toasts: [],
+
+                init() {
+                    this.loadInitialData();
+                    this.triggerToast('TRR Academic Portal Ready', 'Academic Portal Initialized', 'info');
+                },
+
+                loadInitialData() {
+                    const savedAssignments = localStorage.getItem('trr_assignments');
+                    const savedStudents = localStorage.getItem('trr_students');
+                    const savedDrafts = localStorage.getItem('trr_drafts');
+
+                    if (savedAssignments) {
+                        this.assignments = JSON.parse(savedAssignments);
+                    } else {
+                        // Prescribed Mid-I Assignments mapped to official TRR College timetable
+                        this.assignments = [
+                            {
+                                id: 1,
+                                semId: 'sem2_1',
+                                branch: 'CSE',
+                                subjectCode: 'CS303PC',
+                                subjectName: 'Object Oriented Programming through Java',
+                                typeTag: 'Mid-I Assignment',
+                                title: 'Java Interfaces, Exception Handling & JVM Architecture',
+                                description: 'Implement polymorphic interfaces with custom exceptions and describe memory layout.',
+                                deadline: 'Tomorrow, 11:59 PM',
+                                status: 'due_soon',
+                                statusLabel: 'Due Soon',
+                                allowedFormats: ['PDF', 'PNG', 'ZIP'],
+                                maxSizeMB: 20,
+                                totalPoints: 100,
+                                gradeScore: null,
+                                feedback: ''
+                            },
+                            {
+                                id: 2,
+                                semId: 'sem2_1',
+                                branch: 'CSE',
+                                subjectCode: 'CS305PC',
+                                subjectName: 'Database Management Systems',
+                                typeTag: 'Mid-I Assignment',
+                                title: 'ER Modeling, Relational Algebra & 3NF Normalization',
+                                description: 'Construct Schema diagram for University Hospital system and decompose to BCNF.',
+                                deadline: 'Oct 04, 2026',
+                                status: 'submitted',
+                                statusLabel: 'Submitted',
+                                allowedFormats: ['PDF', 'DOCX'],
+                                maxSizeMB: 15,
+                                totalPoints: 100,
+                                gradeScore: null,
+                                feedback: ''
+                            },
+                            {
+                                id: 3,
+                                semId: 'sem2_1',
+                                branch: 'CSE',
+                                subjectCode: 'CS301PC',
+                                subjectName: 'Discrete Mathematics',
+                                typeTag: 'Mid-I Assignment',
+                                title: 'Propositional Logic, Predicates & Graph Traversal',
+                                description: 'Prove tautologies using truth tables and resolve Euler path theorem problems.',
+                                deadline: 'Sep 28, 2026',
+                                status: 'graded',
+                                statusLabel: 'Graded (94%)',
+                                allowedFormats: ['PDF'],
+                                maxSizeMB: 10,
+                                totalPoints: 100,
+                                gradeScore: 94,
+                                feedback: 'Excellent deductive proofs and clear graph diagrams.'
+                            },
+                            {
+                                id: 4,
+                                semId: 'sem2_1',
+                                branch: 'CSE',
+                                subjectCode: 'CS302PC',
+                                subjectName: 'Computer Organization and Architecture',
+                                typeTag: 'Mid-I Assignment',
+                                title: 'Instruction Cycle, Pipelining & Booth Algorithm',
+                                description: 'Perform signed Booth binary multiplication and calculate speedup in 5-stage pipeline.',
+                                deadline: 'Sep 20, 2026',
+                                status: 'missing',
+                                statusLabel: 'Missing',
+                                allowedFormats: ['PDF'],
+                                maxSizeMB: 10,
+                                totalPoints: 100,
+                                gradeScore: null,
+                                feedback: ''
+                            },
+                            {
+                                id: 5,
+                                semId: 'sem3_1',
+                                branch: 'CSE',
+                                subjectCode: 'CS501PC',
+                                subjectName: 'Design and Analysis of Algorithms',
+                                typeTag: 'Mid-I Assignment',
+                                title: 'Divide & Conquer, Dynamic Programming (Knapsack)',
+                                description: 'Analyze recurrence relations with Master Theorem and optimize 0/1 Knapsack.',
+                                deadline: 'Oct 10, 2026',
+                                status: 'due_soon',
+                                statusLabel: 'Due Soon',
+                                allowedFormats: ['PDF'],
+                                maxSizeMB: 20,
+                                totalPoints: 100,
+                                gradeScore: null,
+                                feedback: ''
+                            }
+                        ];
+                        this.persistAssignments();
+                    }
+
+                    if (savedStudents) {
+                        this.allStudentsInOrder = JSON.parse(savedStudents);
+                    } else {
+                        // Sequential Roll Number order (Notice Student Nine at 25CSE1009!)
+                        this.allStudentsInOrder = [
+                            { rollNumber: '25CSE1001', name: 'Student One', status: 'submitted', statusLabel: 'Submitted', fileName: 'Student01_CS303PC.pdf', submittedAt: 'Oct 01, 10:14 AM', score: null, feedback: '' },
+                            { rollNumber: '25CSE1002', name: 'Student Two', status: 'graded', statusLabel: 'Graded', fileName: 'Student02_CS303PC.pdf', submittedAt: 'Sep 30, 04:22 PM', score: 92, feedback: 'Great code structure.' },
+                            { rollNumber: '25CSE1003', name: 'Student Three', status: 'missing', statusLabel: 'Missing', fileName: null, submittedAt: null, score: null, feedback: '' },
+                            { rollNumber: '25CSE1004', name: 'Student Four', status: 'submitted', statusLabel: 'Submitted', fileName: 'Student04_CS303PC.pdf', submittedAt: 'Oct 01, 01:10 PM', score: null, feedback: '' },
+                            { rollNumber: '25CSE1005', name: 'Student Five', status: 'graded', statusLabel: 'Graded', fileName: 'Student05_CS303PC.pdf', submittedAt: 'Sep 29, 09:30 PM', score: 85, feedback: 'Good conceptual answers.' },
+                            { rollNumber: '25CSE1006', name: 'Student Six', status: 'submitted', statusLabel: 'Submitted', fileName: 'Student06_CS303PC.pdf', submittedAt: 'Oct 01, 02:40 PM', score: null, feedback: '' },
+                            { rollNumber: '25CSE1007', name: 'Student Seven', status: 'missing', statusLabel: 'Missing', fileName: null, submittedAt: null, score: null, feedback: '' },
+                            { rollNumber: '25CSE1008', name: 'Student Eight', status: 'submitted', statusLabel: 'Submitted', fileName: 'Student08_CS303PC.pdf', submittedAt: 'Sep 30, 08:15 PM', score: null, feedback: '' },
+                            { rollNumber: '25CSE1009', name: 'Student Nine', status: 'submitted', statusLabel: 'Submitted', fileName: 'Student09_CS303PC.pdf', submittedAt: 'Oct 01, 04:30 PM', score: null, feedback: '' },
+                            { rollNumber: '25CSE1010', name: 'Student Ten', status: 'graded', statusLabel: 'Graded', fileName: 'Student10_CS303PC.pdf', submittedAt: 'Sep 29, 05:00 PM', score: 88, feedback: 'Nicely documented code.' },
+                            { rollNumber: '25CSE1011', name: 'Student Eleven', status: 'submitted', statusLabel: 'Submitted', fileName: 'Student11_CS303PC.pdf', submittedAt: 'Oct 01, 11:20 AM', score: null, feedback: '' },
+                            { rollNumber: '25CSE1012', name: 'Student Twelve', status: 'missing', statusLabel: 'Missing', fileName: null, submittedAt: null, score: null, feedback: '' }
+                        ];
+                        this.persistStudents();
+                    }
+
+                    if (savedDrafts) {
+                        this.studentDrafts = JSON.parse(savedDrafts);
+                    }
+                },
+
+                persistAssignments() {
+                    localStorage.setItem('trr_assignments', JSON.stringify(this.assignments));
+                },
+                persistStudents() {
+                    localStorage.setItem('trr_students', JSON.stringify(this.allStudentsInOrder));
+                },
+                persistDrafts() {
+                    localStorage.setItem('trr_drafts', JSON.stringify(this.studentDrafts));
+                },
+
+                // Getters
+                get currentSemesterObj() {
+                    return this.semesters.find(s => s.id === this.selectedSemesterId);
+                },
+
+                getSubjectsForCurrentSemester() {
+                    const semData = this.curriculumSubjects[this.selectedSemesterId];
+                    if (!semData) return [];
+                    return semData[this.selectedBranch] || [];
+                },
+
+                getAssignmentsForCurrentSem() {
+                    return this.assignments.filter(a => a.semId === this.selectedSemesterId && a.branch === this.selectedBranch);
+                },
+
+                get filteredAssignmentsForStudent() {
+                    let list = this.getAssignmentsForCurrentSem();
+                    if (this.selectedSubjectFilter !== 'all') {
+                        list = list.filter(a => a.subjectCode === this.selectedSubjectFilter);
+                    }
+                    return list;
+                },
+
+                // Faculty Sorted Student List
+                get sortedFacultyStudentList() {
+                    let list = [...this.allStudentsInOrder];
+
+                    // Search filter
+                    if (this.searchQuery.trim().length > 0) {
+                        const q = this.searchQuery.toLowerCase();
+                        list = list.filter(s => s.rollNumber.toLowerCase().includes(q) || s.name.toLowerCase().includes(q));
+                    }
+
+                    // Status filter
+                    if (this.facultyStatusFilter !== 'all') {
+                        list = list.filter(s => s.status === this.facultyStatusFilter);
+                    }
+
+                    // Sort by roll number order
+                    list.sort((a, b) => {
+                        return this.rollSortOrder === 'asc' 
+                            ? a.rollNumber.localeCompare(b.rollNumber) 
+                            : b.rollNumber.localeCompare(a.rollNumber);
+                    });
+
+                    return list;
+                },
+
+                toggleRollSort() {
+                    this.rollSortOrder = this.rollSortOrder === 'asc' ? 'desc' : 'asc';
+                },
+
+                // Student actions
+                selectSemester(semId) {
+                    this.selectedSemesterId = semId;
+                    this.selectedSubjectFilter = 'all';
+                    this.triggerToast('Semester Switched', this.currentSemesterObj.title, 'info');
+                },
+
+                switchRole(role) {
+                    this.currentRole = role;
+                    if (role === 'student') {
+                        this.studentView = 'dashboard';
+                    } else {
+                        this.instructorView = 'dashboard';
+                    }
+                    this.triggerToast('Switched Persona', `Navigating as ${role === 'student' ? 'Student Nine (Roll No: 25CSE1009)' : 'Dr. Faculty Advisor (Faculty Evaluator)'}.`, 'info');
+                },
+
+                resetToDashboard() {
+                    this.studentView = 'dashboard';
+                    this.instructorView = 'dashboard';
+                },
+
+                openAssignmentSubmission(item) {
+                    this.activeAssignment = item;
+                    this.submissionFile = null;
+                    this.submissionFilePreview = null;
+                    this.submissionNotes = '';
+                    this.uploadError = null;
+
+                    // Restore draft if exists
+                    if (this.studentDrafts[item.id]) {
+                        const d = this.studentDrafts[item.id];
+                        this.submissionNotes = d.notes || '';
+                        if (d.fakeFileName) {
+                            this.submissionFile = { name: d.fakeFileName, size: d.fakeFileSize || 1024 * 1024 * 2 };
+                        }
+                    }
+
+                    this.studentView = 'submit';
+                },
+
+                handleFileInput(event) {
+                    const file = event.target.files[0];
+                    this.processUploadedFile(file);
+                },
+
+                handleFileDrop(event) {
+                    this.dropzoneActive = false;
+                    const file = event.dataTransfer.files[0];
+                    this.processUploadedFile(file);
+                },
+
+                processUploadedFile(file) {
+                    this.uploadError = null;
+                    if (!file) return;
+
+                    const ext = file.name.split('.').pop().toUpperCase();
+                    const allowed = this.activeAssignment.allowedFormats.map(f => f.toUpperCase());
+
+                    if (!allowed.includes(ext)) {
+                        this.uploadError = `Invalid file format .${ext.toLowerCase()}. Accepted formats: ${this.activeAssignment.allowedFormats.join(', ')}`;
+                        this.submissionFile = null;
+                        this.submissionFilePreview = null;
+                        return;
+                    }
+
+                    const maxBytes = this.activeAssignment.maxSizeMB * 1024 * 1024;
+                    if (file.size > maxBytes) {
+                        this.uploadError = `File size exceeds ${this.activeAssignment.maxSizeMB} MB.`;
+                        this.submissionFile = null;
+                        this.submissionFilePreview = null;
+                        return;
+                    }
+
+                    this.submissionFile = file;
+
+                    if (file.type.startsWith('image/')) {
+                        const r = new FileReader();
+                        r.onload = e => this.submissionFilePreview = e.target.result;
+                        r.readAsDataURL(file);
+                    } else {
+                        this.submissionFilePreview = null;
+                    }
+
+                    this.triggerToast('File Ready', `${file.name} validated for ${this.activeAssignment.subjectCode}.`, 'success');
+                },
+
+                removeFile() {
+                    this.submissionFile = null;
+                    this.submissionFilePreview = null;
+                    this.uploadError = null;
+                },
+
+                saveStudentDraft() {
+                    if (!this.activeAssignment) return;
+                    this.studentDrafts[this.activeAssignment.id] = {
+                        fakeFileName: this.submissionFile ? this.submissionFile.name : null,
+                        fakeFileSize: this.submissionFile ? this.submissionFile.size : null,
+                        notes: this.submissionNotes,
+                        savedAt: new Date().toISOString()
+                    };
+                    this.persistDrafts();
+                    this.triggerToast('Draft Saved', 'Progress stored in your browser.', 'info');
+                },
+
+                submitAssignment() {
+                    if (!this.submissionFile) return;
+
+                    this.isUploading = true;
+                    this.uploadProgress = 20;
+
+                    const interval = setInterval(() => {
+                        this.uploadProgress += 25;
+                        if (this.uploadProgress >= 100) {
+                            clearInterval(interval);
+                            this.isUploading = false;
+                            this.uploadProgress = 0;
+                            this.finalizeStudentSubmission();
+                        }
+                    }, 200);
+                },
+
+                finalizeStudentSubmission() {
+                    // Update assignment status
+                    const idx = this.assignments.findIndex(a => a.id === this.activeAssignment.id);
+                    if (idx !== -1) {
+                        this.assignments[idx].status = 'submitted';
+                        this.assignments[idx].statusLabel = 'Submitted';
+                        this.persistAssignments();
+                    }
+
+                    delete this.studentDrafts[this.activeAssignment.id];
+                    this.persistDrafts();
+
+                    // Update Student Nine's entry in Faculty Roll List
+                    const currentStudentIdx = this.allStudentsInOrder.findIndex(s => s.rollNumber === '25CSE1009');
+                    if (currentStudentIdx !== -1) {
+                        this.allStudentsInOrder[currentStudentIdx].status = 'submitted';
+                        this.allStudentsInOrder[currentStudentIdx].statusLabel = 'Submitted';
+                        this.allStudentsInOrder[currentStudentIdx].fileName = this.submissionFile.name;
+                        this.allStudentsInOrder[currentStudentIdx].submittedAt = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                        this.persistStudents();
+                    }
+
+                    // Prepare receipt
+                    this.activeReceipt = {
+                        id: 'REC-TRR-' + Math.random().toString(36).substring(2, 7).toUpperCase() + '-2026',
+                        studentName: 'Student Portal',
+                        subjectTitle: `${this.activeAssignment.subjectCode}: ${this.activeAssignment.subjectName}`,
+                        fileName: this.submissionFile.name,
+                        fileSize: this.formatBytes(this.submissionFile.size),
+                        timestamp: new Date().toLocaleString(),
+                        checksum: 'b49f9933e461b17a78a6cb57f4955375c3db6f40b2e3c09930f6a27e7ae2948b'
+                    };
+
+                    this.showReceiptModal = true;
+                    this.studentView = 'dashboard';
+                    this.triggerToast('Submission Logged', 'Uploaded successfully with verifiable SHA-256 hash.', 'success');
+                },
+
+                viewReceiptFor(item) {
+                    this.activeReceipt = {
+                        id: 'REC-TRR-0509-2026',
+                        studentName: 'Student Portal',
+                        subjectTitle: `${item.subjectCode}: ${item.subjectName}`,
+                        fileName: `Student_${item.subjectCode}.pdf`,
+                        fileSize: '1.9 MB',
+                        timestamp: 'Oct 01, 2026, 4:30 PM',
+                        checksum: 'b49f9933e461b17a78a6cb57f4955375c3db6f40b2e3c09930f6a27e7ae2948b'
+                    };
+                    this.showReceiptModal = true;
+                },
+
+                downloadReceiptText() {
+                    if (!this.activeReceipt) return;
+                    const text = `========================================================
+     TRR COLLEGE OF TECHNOLOGY (Affiliated to JNTUH)
+               SUBMISSION PROOF RECEIPT
+========================================================
+Student Name:     Student Nine
+Roll Number:      25CSE1009
+Department:       Computer Science & Engineering (CSE)
+Semester:         II B.Tech I Semester (Regulation: R25)
+Subject / Task:   ${this.activeReceipt.subjectTitle}
+Receipt Number:   ${this.activeReceipt.id}
+Uploaded File:    ${this.activeReceipt.fileName} (${this.activeReceipt.fileSize})
+Verified Time:    ${this.activeReceipt.timestamp}
+SHA-256 Checksum: ${this.activeReceipt.checksum}
+Status:           ACCEPTED & LOGGED IN EVALUATION LEDGER
+========================================================
+This serves as valid academic proof of timely submission.`;
+
+                    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Receipt_25CSE1009.txt`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    this.triggerToast('Receipt Saved', 'Downloaded Receipt_25CSE1009.txt', 'success');
+                },
+
+                openGradeDetails(item) {
+                    this.activeGradeAssignment = item;
+                    this.showGradeDetailsModal = true;
+                },
+
+                // Faculty Actions
+                openGradingScreen(student) {
+                    this.activeGradingStudent = student;
+                    this.rubricScore1 = 28;
+                    this.rubricScore2 = 38;
+                    this.rubricScore3 = 28;
+                    this.facultyFeedbackText = student.feedback || 'Well written answers. Clean code indentation and clear explanation of JVM architecture.';
+                    this.instructorView = 'grading';
+                },
+
+                calculateGradingTotal() {
+                    const s1 = parseInt(this.rubricScore1) || 0;
+                    const s2 = parseInt(this.rubricScore2) || 0;
+                    const s3 = parseInt(this.rubricScore3) || 0;
+                    return Math.min(100, s1 + s2 + s3);
+                },
+
+                publishStudentGrade() {
+                    const finalScore = this.calculateGradingTotal();
+                    if (!this.activeGradingStudent) return;
+
+                    // Update in faculty list
+                    const sIdx = this.allStudentsInOrder.findIndex(s => s.rollNumber === this.activeGradingStudent.rollNumber);
+                    if (sIdx !== -1) {
+                        this.allStudentsInOrder[sIdx].status = 'graded';
+                        this.allStudentsInOrder[sIdx].statusLabel = 'Graded';
+                        this.allStudentsInOrder[sIdx].score = finalScore;
+                        this.allStudentsInOrder[sIdx].feedback = this.facultyFeedbackText;
+                        this.persistStudents();
+                    }
+
+                    // If Student Nine, update student assignments view
+                    if (this.activeGradingStudent.rollNumber === '25CSE1009') {
+                        const aIdx = this.assignments.findIndex(a => a.id === 1); // CS303PC Java
+                        if (aIdx !== -1) {
+                            this.assignments[aIdx].status = 'graded';
+                            this.assignments[aIdx].statusLabel = `Graded (${finalScore}%)`;
+                            this.assignments[aIdx].gradeScore = finalScore;
+                            this.assignments[aIdx].feedback = this.facultyFeedbackText;
+                            this.persistAssignments();
+                        }
+                    }
+
+                    this.instructorView = 'dashboard';
+                    this.triggerToast('Marks Published', `Saved score ${finalScore}/100 for ${this.activeGradingStudent.rollNumber} (${this.activeGradingStudent.name}).`, 'success');
+                },
+
+                copyMissingRollNumbers() {
+                    const missing = this.allStudentsInOrder.filter(s => s.status === 'missing').map(s => s.rollNumber);
+                    if (missing.length === 0) {
+                        this.triggerToast('All Submitted', 'No students with missing assignments.', 'success');
+                        return;
+                    }
+                    const text = `TRR College of Technology - CSE II Year (Mid-I):\nMissing Submissions for CS303PC (Java Programming):\nRoll Numbers: ${missing.join(', ')}`;
+                    navigator.clipboard.writeText(text);
+                    this.triggerToast('Copied to Clipboard!', `Copied missing list: ${missing.join(', ')}`, 'warning');
+                },
+
+                sendSingleReminder(student) {
+                    this.triggerToast('Reminder Sent', `Notification dispatched to ${student.rollNumber} (${student.name}).`, 'info');
+                },
+
+                createNewAssignmentSubmit() {
+                    const newId = this.assignments.length + 1;
+                    const created = {
+                        id: newId,
+                        semId: 'sem2_1',
+                        branch: 'CSE',
+                        subjectCode: this.newAssignment.subjectCode,
+                        subjectName: 'Prescribed Subject (' + this.newAssignment.subjectCode + ')',
+                        typeTag: 'Mid-I Assignment',
+                        title: this.newAssignment.title,
+                        description: this.newAssignment.description,
+                        deadline: this.newAssignment.deadline,
+                        status: 'due_soon',
+                        statusLabel: 'Due Soon',
+                        allowedFormats: ['PDF', 'PNG'],
+                        maxSizeMB: 20,
+                        totalPoints: 100,
+                        gradeScore: null,
+                        feedback: ''
+                    };
+
+                    this.assignments.unshift(created);
+                    this.persistAssignments();
+                    this.showCreateModal = false;
+                    this.triggerToast('Assignment Created', `Published ${created.title} for ${created.subjectCode}.`, 'success');
+                },
+
+                resetData() {
+                    localStorage.removeItem('trr_assignments');
+                    localStorage.removeItem('trr_students');
+                    localStorage.removeItem('trr_drafts');
+                    this.loadInitialData();
+                    this.triggerToast('Data Restored', 'Reset to initial TRR College demo dataset.', 'info');
+                },
+
+                // Metric helpers
+                getStudentDueCount() {
+                    return this.getAssignmentsForCurrentSem().filter(a => a.status === 'due_soon').length;
+                },
+                getStudentSubmittedCount() {
+                    return this.getAssignmentsForCurrentSem().filter(a => a.status === 'submitted').length;
+                },
+                getStudentGradedCount() {
+                    return this.getAssignmentsForCurrentSem().filter(a => a.status === 'graded').length;
+                },
+
+                formatBytes(bytes) {
+                    if (!bytes) return '0 B';
+                    const k = 1024;
+                    const sizes = ['B', 'KB', 'MB', 'GB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+                },
+
+                formatDateShort(isoDate) {
+                    if (!isoDate) return '';
+                    const d = new Date(isoDate);
+                    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                },
+
+                calculateLetter(score, total) {
+                    if (!score || !total) return 'N/A';
+                    const pct = (score / total) * 100;
+                    if (pct >= 90) return 'A+';
+                    if (pct >= 80) return 'A';
+                    if (pct >= 70) return 'B';
+                    if (pct >= 60) return 'C';
+                    return 'Needs Improvement';
+                },
+
+                triggerToast(title, message, type = 'info') {
+                    const id = Date.now();
+                    this.toasts.push({ id, title, message, type, visible: true });
+                    setTimeout(() => this.dismissToast(id), 4000);
+                },
+
+                dismissToast(id) {
+                    const t = this.toasts.find(toast => toast.id === id);
+                    if (t) t.visible = false;
+                    setTimeout(() => {
+                        this.toasts = this.toasts.filter(toast => toast.id !== id);
+                    }, 300);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
